@@ -14,22 +14,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the repository
       - uses: actions/checkout@v4
 
+      # Set up Java 17 using Microsoft's distribution
       - name: Set up Java version
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'microsoft'
 
-      - name: Build with Maven
-        run: mvn clean install
+      # Build the project using Gradle
+      - name: Build with Gradle
+        run: ./gradlew clean build
 
+      # Upload the built JAR file as an artifact
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          path: '${{ github.workspace }}/build/libs/*.jar'
 
   deploy:
     runs-on: ubuntu-latest
@@ -38,26 +42,22 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
-  
+      id-token: write # This is required for requesting the JWT
+
     steps:
+      # Download the artifact from the build job
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: java-app
-      
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_376BE1AD23734931A5DD5C49C366B4D0 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A8C5B1A67EE14291B52E1274C827C5B9 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9B95A61F24A6414C89857D609EEAAE35 }}
 
+      # Deploy the JAR to Azure Web App using the publish profile
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'spring-ai-backend'
-          slot-name: 'Production'
-          package: '*.jar'
-          
+          app-name: 'spring-ai-backend'                  # Your Azure Web App name
+          slot-name: 'Production'                        # Deployment slot (usually 'Production')
+          package: '*.jar'                                # Path to the JAR file
+          publish-profile: ${{ secrets.Azure_API_Key }}   # Azure publish profile (stored as a secret)
+          # Optional: If Azure_Endpoint is required by your setup, you can pass it as an environment variable or use it as needed
