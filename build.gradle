@@ -38,14 +38,11 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-	// https://mvnrepository.com/artifact/com.google.cloud/google-cloud-vision
 	implementation 'com.google.cloud:google-cloud-vision:3.51.0'
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web
 	implementation 'org.springframework.boot:spring-boot-starter-web:3.3.5'
-	// https://mvnrepository.com/artifact/commons-fileupload/commons-fileupload
 	implementation 'commons-fileupload:commons-fileupload:1.5'
-	// https://mvnrepository.com/artifact/log4j/log4j
-	implementation 'log4j:log4j:1.2.17'
+	implementation 'org.apache.logging.log4j:log4j-core:2.21.1'
+	implementation 'org.apache.logging.log4j:log4j-api:2.21.1'
 	implementation 'org.springframework.boot:spring-boot-starter-json'
 	implementation 'org.springframework.boot:spring-boot-configuration-processor'
 	implementation 'org.apache.httpcomponents:httpclient:4.5.13'
