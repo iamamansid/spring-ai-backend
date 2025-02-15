@@ -1,5 +1,6 @@
 package com.iamamansid.spring_ai_backend.Service.Impl;
 
+import ch.qos.logback.classic.Logger;
 import com.iamamansid.spring_ai_backend.Service.DocumentService;
 import com.iamamansid.spring_ai_backend.models.response.ApiResponse;
 import com.iamamansid.spring_ai_backend.models.response.DocOcrResponse;
@@ -50,8 +51,10 @@ public class DocumentServiceImpl implements DocumentService {
         } catch (Exception ex) {
 
         }
-
-        DocOcrResponse response1 = parseOcrResponse(response.getBody());
+        DocOcrResponse response1 = null;
+        if (response!=null){
+           response1  = parseOcrResponse(response.getBody());
+        }
         return response1;
     }
 
