@@ -2,7 +2,6 @@ spring:
   application:
     name: spring-ai-backend
 
-jpa:
   servlet:
     multipart:
       max-file-size: 5MB
