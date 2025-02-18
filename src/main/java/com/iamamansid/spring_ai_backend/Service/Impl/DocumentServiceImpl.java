@@ -5,7 +5,9 @@ import com.iamamansid.spring_ai_backend.Service.DocumentService;
 import com.iamamansid.spring_ai_backend.models.response.ApiResponse;
 import com.iamamansid.spring_ai_backend.models.response.DocOcrResponse;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -26,6 +28,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Value("${AmanOpenAI.Endpoint}")
     String endpoint;
 
+    private static final Logger logger = (Logger) LoggerFactory.getLogger(DocumentServiceImpl.class);
+
 
     public DocumentServiceImpl( RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -34,6 +38,7 @@ public class DocumentServiceImpl implements DocumentService {
 
 
     @Override
+    @Cacheable(value = "ocrResponses", key = "#document.originalFilename")
     public DocOcrResponse scanDocOcr(MultipartFile document) {
 
         String url = endpoint + "/computervision/imageanalysis:analyze?features=caption,read&model-version=latest&language=en&api-version=2024-02-01";
@@ -49,7 +54,8 @@ public class DocumentServiceImpl implements DocumentService {
 
             response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
         } catch (Exception ex) {
-
+            logger.error("Error while calling Azure OCR API", ex);
+            throw new RuntimeException("OCR Processing Failed: " + ex.getMessage());
         }
         DocOcrResponse response1 = null;
         if (response!=null){
