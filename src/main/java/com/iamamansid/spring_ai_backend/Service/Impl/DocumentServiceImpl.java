@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,6 +40,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Cacheable(value = "ocrResponses", key = "#document.originalFilename")
+    @Async
     public DocOcrResponse scanDocOcr(MultipartFile document) {
 
         String url = endpoint + "/computervision/imageanalysis:analyze?features=caption,read&model-version=latest&language=en&api-version=2024-02-01";

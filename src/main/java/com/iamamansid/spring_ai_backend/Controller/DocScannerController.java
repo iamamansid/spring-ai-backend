@@ -11,9 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST})
@@ -29,7 +32,8 @@ public class DocScannerController {
     public ResponseEntity<ApiResponse> scanDocData(@RequestParam(value = "document", required = true)MultipartFile document) {
         ApiResponse response = new ApiResponse();
         try {
-            DocOcrResponse responseString = documentService.scanDocOcr(document);
+            CompletableFuture<DocOcrResponse> futureResponse = scanDocOcrAsync(document);
+            DocOcrResponse responseString = futureResponse.join();
             if (responseString != null) {
                 response.setResponse(responseString);
                 response.setCode(200);
@@ -46,5 +50,11 @@ public class DocScannerController {
             response.setResponse("An unexpected error occurred while processing the document.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+
+    @Async
+    public CompletableFuture<DocOcrResponse> scanDocOcrAsync(MultipartFile document) {
+        return CompletableFuture.supplyAsync(() -> documentService.scanDocOcr(document));
     }
 }
