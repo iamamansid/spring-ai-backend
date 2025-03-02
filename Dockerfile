@@ -12,7 +12,7 @@ COPY build.gradle settings.gradle ./
 COPY src/ src/
 
 # Build the application, skipping tests
-RUN gradle clean build -x test --no-daemon
+RUN .\gradlew clean build -x test --no-daemon
 
 # Use an official OpenJDK runtime as a parent image
 FROM openjdk:17-jdk-slim
