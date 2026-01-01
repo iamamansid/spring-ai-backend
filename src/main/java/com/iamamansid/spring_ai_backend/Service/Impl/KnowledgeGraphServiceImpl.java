@@ -2,6 +2,7 @@ package com.iamamansid.spring_ai_backend.Service.Impl;
 
 import com.iamamansid.spring_ai_backend.Service.KnowledgeGraphService;
 import org.neo4j.driver.Driver;
+import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 import org.springframework.stereotype.Service;
 
@@ -69,6 +70,20 @@ public class KnowledgeGraphServiceImpl implements KnowledgeGraphService {
 
                 return null;
             });
+        }
+    }
+
+    public boolean executeTestQuery(String companyName) {
+
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    """
+                    MATCH (i:Invoice)-[:ISSUED_TO]->(c:Company {name:$company})
+                    RETURN i
+                    """,
+                    Map.of("company", companyName)
+            );
+            return result.hasNext();
         }
     }
 }

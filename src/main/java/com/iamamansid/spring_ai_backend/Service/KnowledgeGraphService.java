@@ -6,4 +6,6 @@ import java.util.Map;
 public interface KnowledgeGraphService {
 
     public void createInvoiceGraph(Map<String, List<String>> entities);
+
+    public boolean executeTestQuery(String companyName);
 }

@@ -3,8 +3,10 @@ package com.iamamansid.spring_ai_backend.Controller;
 
 
 import com.iamamansid.spring_ai_backend.Service.DocumentService;
+import com.iamamansid.spring_ai_backend.Service.EvaluationService;
 import com.iamamansid.spring_ai_backend.models.response.ApiResponse;
 import com.iamamansid.spring_ai_backend.models.response.DocOcrResponse;
+import com.iamamansid.spring_ai_backend.models.response.EvaluationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
@@ -25,6 +29,8 @@ public class DocScannerController {
 
     @Autowired
     DocumentService documentService;
+    @Autowired
+    EvaluationService evaluationService;
 
     private static final Logger logger = LoggerFactory.getLogger(DocScannerController.class);
 
@@ -49,5 +55,14 @@ public class DocScannerController {
             response.setResponse("An unexpected error occurred while processing the document.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
+    }
+
+    @PostMapping("/invoice/{invoiceNo}")
+    public EvaluationResult evaluate(
+            @PathVariable String invoiceNo,
+            @RequestBody Map<String, List<String>> extractedEntities) {
+
+        return evaluationService.evaluateInvoice(
+                invoiceNo, extractedEntities);
     }
 }
