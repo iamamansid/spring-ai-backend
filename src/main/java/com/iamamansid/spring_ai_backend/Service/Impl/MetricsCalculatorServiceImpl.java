@@ -23,7 +23,7 @@ public class MetricsCalculatorServiceImpl implements MetricsCalculatorService {
             int extractedRelations,
             int expectedRelations) {
 
-        return (double) extractedRelations / expectedRelations;
+        return Math.min(1.0, (double)extractedRelations / expectedRelations);
     }
 
     public boolean graphIdempotencyCheck(

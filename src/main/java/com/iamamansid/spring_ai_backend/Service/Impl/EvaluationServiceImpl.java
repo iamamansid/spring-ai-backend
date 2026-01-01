@@ -55,9 +55,31 @@ public class EvaluationServiceImpl implements EvaluationService {
                 metricsCalculator.relationCompleteness(
                         extractedRelations, expectedRelations);
 
+        boolean graphIdempotent =
+                kgService.checkIdempotency(
+                        invoiceNo, () -> kgService.createInvoiceGraph(extractedEntities));
+
+        int totalQueries = 3;
+        int successfulQueries = 0;
+
+        if (kgService.queryInvoiceByCompany(
+                gt.getCompanies().get(0))) successfulQueries++;
+
+        if (kgService.queryInvoiceByAmount(
+                gt.getAmounts().get(0))) successfulQueries++;
+
+        if (kgService.queryInvoiceExists(invoiceNo))
+            successfulQueries++;
+
+        double queryAnswerability =
+                metricsCalculator.queryAnswerability(
+                        successfulQueries, totalQueries);
+
         return new EvaluationResult(
                 entityAccuracy,
-                relationCompleteness
+                relationCompleteness,
+                graphIdempotent,
+                queryAnswerability
         );
     }
 }

@@ -86,5 +86,75 @@ public class KnowledgeGraphServiceImpl implements KnowledgeGraphService {
             return result.hasNext();
         }
     }
+
+    @Override
+    public long getTotalNodeCount(String invoiceNo) {
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    """
+                    MATCH (i:Invoice {invoiceNo:$invoiceNo})-[*0..1]-(n)
+                    RETURN count(DISTINCT n) AS count
+                    """,
+                    Map.of("invoiceNo", invoiceNo)
+            );
+            return result.single().get("count").asLong();
+        }
+    }
+
+
+    @Override
+    public boolean checkIdempotency(
+            String invoiceNo,
+            Runnable reIngestOperation) {
+
+        long before = getTotalNodeCount(invoiceNo);
+
+        reIngestOperation.run();
+
+        long after = getTotalNodeCount(invoiceNo);
+
+        return before == after;
+    }
+
+
+    public boolean queryInvoiceByCompany(String companyName) {
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    """
+                    MATCH (i:Invoice)-[:ISSUED_TO]->(c:Company {name:$company})
+                    RETURN i LIMIT 1
+                    """,
+                    Map.of("company", companyName)
+            );
+            return result.hasNext();
+        }
+    }
+
+    public boolean queryInvoiceByAmount(String amount) {
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    """
+                    MATCH (i:Invoice)-[:HAS_AMOUNT]->(a:Amount {value:$amount})
+                    RETURN i LIMIT 1
+                    """,
+                    Map.of("amount", amount)
+            );
+            return result.hasNext();
+        }
+    }
+
+    public boolean queryInvoiceExists(String invoiceNo) {
+        try (Session session = driver.session()) {
+            Result result = session.run(
+                    """
+                    MATCH (i:Invoice {invoiceNo:$invoiceNo})
+                    RETURN i
+                    """,
+                    Map.of("invoiceNo", invoiceNo)
+            );
+            return result.hasNext();
+        }
+    }
+
 }
 
