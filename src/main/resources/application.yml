@@ -21,3 +21,9 @@ AmanOpenAI:
 logging:
   level:
     org.springframework: ERROR
+
+neo4j:
+  connection:
+    uri: ${Connection_URL}
+    username: ${Connection_Username}
+    password: ${Connection_Password}

@@ -6,5 +6,5 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface DocumentService {
 
-    DocOcrResponse scanDocOcr(MultipartFile document);
+    DocOcrResponse scanDocOcr(MultipartFile document) throws Exception;
 }
