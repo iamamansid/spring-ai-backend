@@ -28,7 +28,7 @@ public class KnowledgeGraphServiceImpl implements KnowledgeGraphService {
 
             return session.executeWrite(tx -> {
 
-                // Create Invoice ONCE
+                // 1️⃣ Invoice (single source of truth)
                 tx.run(
                         """
                         MERGE (i:Invoice {invoiceNo: $invoiceNo})
@@ -37,52 +37,59 @@ public class KnowledgeGraphServiceImpl implements KnowledgeGraphService {
                         Map.of("invoiceNo", invoiceNo)
                 );
 
-                // Dates
+                // 2️⃣ Dates (invoice-scoped ONLY)
                 for (String date : entities.getOrDefault("DATE", List.of())) {
                     tx.run(
                             """
-                            MERGE (d:Date {value: $date, invoiceNo: $invoiceNo})
-                            MERGE (i:Invoice {invoiceNo: $invoiceNo})
+                            MATCH (i:Invoice {invoiceNo: $invoiceNo})
+                            MERGE (d:Date {date: $date})
                             MERGE (i)-[:HAS_DATE]->(d)
                             """,
-                            Map.of("date", date, "invoiceNo", invoiceNo)
+                            Map.of("invoiceNo", invoiceNo, "date", date)
                     );
                 }
 
-                // Amounts
+                // 3️⃣ Amounts (invoice-scoped ONLY)
                 for (String amount : entities.getOrDefault("AMOUNT", List.of())) {
                     tx.run(
                             """
-                            MERGE (a:Amount {value: $amount, invoiceNo: $invoiceNo})
-                            MERGE (i:Invoice {invoiceNo: $invoiceNo})
+                            MATCH (i:Invoice {invoiceNo: $invoiceNo})
+                            MERGE (a:Amount {amount: $amount})
                             MERGE (i)-[:HAS_AMOUNT]->(a)
                             """,
-                            Map.of("amount", amount, "invoiceNo", invoiceNo)
+                            Map.of("invoiceNo", invoiceNo, "amount", amount)
                     );
                 }
 
-                // Companies
+                // 4️⃣ Companies (global, normalized)
                 for (String company : entities.getOrDefault("COMPANY", List.of())) {
+
+                    String normalizedCompany =
+                            company.trim().replaceAll("\\s+", " ");
+
                     tx.run(
                             """
+                            MATCH (i:Invoice {invoiceNo: $invoiceNo})
                             MERGE (c:Company {name: $company})
-                            MERGE (i:Invoice {invoiceNo: $invoiceNo})
                             MERGE (i)-[:ISSUED_TO]->(c)
                             """,
-                            Map.of("company", company, "invoiceNo", invoiceNo)
+                            Map.of(
+                                    "invoiceNo", invoiceNo,
+                                    "company", normalizedCompany
+                            )
                     );
                 }
 
-                // ✅ VERIFICATION QUERY
-                Result result = tx.run(
+                // 5️⃣ Verification
+                Result r = tx.run(
                         """
                         MATCH (i:Invoice {invoiceNo:$invoiceNo})
-                        RETURN count(i) AS count
+                        RETURN count(i) AS cnt
                         """,
                         Map.of("invoiceNo", invoiceNo)
                 );
 
-                return result.single().get("count").asInt() == 1;
+                return r.single().get("cnt").asInt() == 1;
             });
         }
     }

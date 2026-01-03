@@ -8,6 +8,16 @@ import lombok.Setter;
 public class DocOcrResponse {
     private Double confidence;
 
+    public boolean isGraphCreated() {
+        return isGraphCreated;
+    }
+
+    public void setGraphCreated(boolean graphCreated) {
+        isGraphCreated = graphCreated;
+    }
+
+    private boolean isGraphCreated;
+
     public String getCaptionResult() {
         return captionResult;
     }

@@ -75,6 +75,7 @@ public class DocumentServiceImpl implements DocumentService {
             try {
                 res = entityExtractionService.extractEntities(response1.getReadResult());
                 boolean isGraphCreated = knowledgeGraphService.createInvoiceGraph(res);
+                response1.setGraphCreated(isGraphCreated);
             } catch (Exception ex) {
                 logger.error("Error while retrieving entities or writing to Neo4j:", ex);
                 throw new Exception("Error while retrieving entities or writing to Neo4j: "+ex.getMessage());
