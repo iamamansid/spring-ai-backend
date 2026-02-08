@@ -54,7 +54,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentServiceImpl( RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-    public final String SYSTEM_MESSAGE = "You are a chatbot agent. Your task is to assist user with whatever info they request.";
+    public final String SYSTEM_MESSAGE = "You are a chatbot agent. Your task is to assist user with whatever info they request. Also make the answers concise and to the point. If you don't know the answer, say you don't know. Always try to be helpful and polite.";
 
 
 
