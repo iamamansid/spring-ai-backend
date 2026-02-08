@@ -4,6 +4,9 @@ import ch.qos.logback.classic.Logger;
 import com.iamamansid.spring_ai_backend.Service.DocumentService;
 import com.iamamansid.spring_ai_backend.Service.EntityExtractionService;
 import com.iamamansid.spring_ai_backend.Service.KnowledgeGraphService;
+import com.iamamansid.spring_ai_backend.models.requests.ChatBotRequest;
+import com.iamamansid.spring_ai_backend.models.requests.Message;
+import com.iamamansid.spring_ai_backend.models.requests.Messages;
 import com.iamamansid.spring_ai_backend.models.response.ApiResponse;
 import com.iamamansid.spring_ai_backend.models.response.DocOcrResponse;
 import jakarta.annotation.PostConstruct;
@@ -32,6 +35,13 @@ public class DocumentServiceImpl implements DocumentService {
     @Value("${AmanOpenAI.Endpoint}")
     String endpoint;
 
+    @Value("${chatbot.model}")
+    String chatBotModel;
+    @Value("${chatbot.apiKey}")
+    String chatBotApiKey;
+    @Value("${chatbot.endpoint}")
+    String chatBotEndpoint;
+
     @Autowired
     EntityExtractionService entityExtractionService;
 
@@ -44,6 +54,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentServiceImpl( RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
+    public final String SYSTEM_MESSAGE = "You are a chatbot agent. Your task is to assist user with whatever info they request.";
 
 
 
@@ -84,6 +95,37 @@ public class DocumentServiceImpl implements DocumentService {
         return response1;
     }
 
+    @Override
+    public String callChatBot(Messages chatbotMessages) throws Exception {
+        String responseText = "No response from chatbot.";
+        Message systemMessage = new Message();
+        List<Message> messages = chatbotMessages.getMessages();
+        ChatBotRequest chatBotRequest = new ChatBotRequest();
+        systemMessage.setRole("system");
+        systemMessage.setContent(SYSTEM_MESSAGE);
+        messages.add(0, systemMessage);
+        chatBotRequest.setModel(chatBotModel);
+        chatBotRequest.setMessages(messages);
+        try {
+            HttpHeaders chatBotHeaders = new HttpHeaders();
+            chatBotHeaders.setContentType(MediaType.APPLICATION_JSON);
+            chatBotHeaders.setBearerAuth(chatBotApiKey);
+
+            HttpEntity<ChatBotRequest> chatBotEntity = new HttpEntity<>(chatBotRequest, chatBotHeaders);
+            ResponseEntity<Map> chatBotResponse = restTemplate.exchange(chatBotEndpoint, HttpMethod.POST, chatBotEntity, Map.class);
+            if(chatBotResponse.getStatusCode() == HttpStatus.OK) {
+                responseText = extractChatBotResponse(chatBotResponse.getBody());
+            } else {
+                logger.error("ChatBot API returned non-OK status: " + chatBotResponse.getStatusCode());
+                responseText = "ChatBot API returned non-OK status: " + chatBotResponse.getStatusCode();
+            }
+            return responseText;
+        } catch (Exception ex) {
+            logger.error("Error while calling ChatBot API", ex);
+            throw new RuntimeException("ChatBot API Call Failed: " + ex.getMessage());
+        }
+    }
+
     public DocOcrResponse parseOcrResponse(Map<String, Object> responseBody) {
         DocOcrResponse ocrResponse = new DocOcrResponse();
 
@@ -119,5 +161,18 @@ public class DocumentServiceImpl implements DocumentService {
         ocrResponse.setReadResult(extractedText.toString());
 
         return ocrResponse;
+    }
+
+    private String extractChatBotResponse(Map<String, Object> responseBody) {
+        if (responseBody == null || !responseBody.containsKey("choices")) {
+            return "No response from chatbot.";
+        }
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+        if (choices.isEmpty()) {
+            return "No response from chatbot.";
+        }
+        Map<String, Object> firstChoice = choices.get(0);
+        Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+        return message != null ? (String) message.get("content") : "No response from chatbot.";
     }
 }

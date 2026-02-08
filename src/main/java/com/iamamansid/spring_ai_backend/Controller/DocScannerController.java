@@ -4,6 +4,8 @@ package com.iamamansid.spring_ai_backend.Controller;
 
 import com.iamamansid.spring_ai_backend.Service.DocumentService;
 import com.iamamansid.spring_ai_backend.Service.EvaluationService;
+import com.iamamansid.spring_ai_backend.models.requests.Message;
+import com.iamamansid.spring_ai_backend.models.requests.Messages;
 import com.iamamansid.spring_ai_backend.models.response.ApiResponse;
 import com.iamamansid.spring_ai_backend.models.response.DocOcrResponse;
 import com.iamamansid.spring_ai_backend.models.response.EvaluationResult;
@@ -64,5 +66,29 @@ public class DocScannerController {
 
         return evaluationService.evaluateInvoice(
                 invoiceNo, extractedEntities);
+    }
+
+    @PostMapping("/chatbot")
+    public ResponseEntity<ApiResponse> chatBot(@RequestBody Messages messages) {
+        ApiResponse response = new ApiResponse();
+        try {
+            String responseString = documentService.callChatBot(messages);
+            if(responseString != null && !responseString.isEmpty() && !responseString.equals("No response from chatbot.")) {
+                response.setResponse(responseString);
+                response.setCode(200);
+                response.setResult(true);
+            } else {
+                response.setResponse(responseString);
+                response.setCode(500);
+                response.setResult(false);
+            }
+        } catch (Exception e) {
+            logger.error("Error processing chatbot request: {}", e.getMessage(), e);
+            response.setCode(500);
+            response.setResult(false);
+            response.setResponse("An unexpected error occurred while processing the chatbot request.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(response);
     }
 }
