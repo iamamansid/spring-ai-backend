@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -122,8 +123,9 @@ public class DocumentServiceImpl implements DocumentService {
             return responseText;
         } catch (Exception ex) {
             logger.error("Error while calling ChatBot API", ex);
-            throw new RuntimeException("ChatBot API Call Failed: " + ex.getMessage());
+            responseText = "An error occurred while calling the ChatBot API: " + ((HttpClientErrorException.TooManyRequests) ex).getStatusCode();
         }
+        return responseText;
     }
 
     public DocOcrResponse parseOcrResponse(Map<String, Object> responseBody) {
